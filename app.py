@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 import os
 
-st.set_page_config(page_title="Buscador de Pasillos", page_icon="👟")
+st.set_page_config(page_title="Buscador de Pasillos John Foos", page_icon="👟")
 
-st.title("👟 Buscador de Pasillos")
+st.title("👟 Buscador de Pasillos JF")
 st.markdown("Ingresá el modelo para saber su ubicación.")
 
 @st.cache_data
