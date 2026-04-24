@@ -2,37 +2,35 @@ import streamlit as st
 import pandas as pd
 import os
 
-st.set_page_config(page_title="Buscador de Pasillos - Depósito", page_icon="👟")
+st.set_page_config(page_title="Buscador de Pasillos", page_icon="👟")
 
 st.title("👟 Buscador de Pasillos")
-st.markdown("Ingresá el modelo para saber en qué pasillo se encuentra.")
+st.markdown("Ingresá el modelo para saber su ubicación.")
 
 @st.cache_data
 def load_data():
     file_name = 'estanterias_shop.csv'
-    
     if not os.path.exists(file_name):
         return None, None
 
     try:
-        # Forzamos el separador de coma y saltamos líneas con errores si las hubiera
+        # Leemos el CSV sin importar los nombres de las columnas
         df = pd.read_csv(file_name, sep=',', on_bad_lines='skip')
-        
-        # El nombre de la columna de pasillos en el nuevo CSV es 'PASILLO'
-        pasillo_col = 'PASILLO'
-        model_cols = [col for col in df.columns if 'MODELO' in col]
         
         lista_modelos = []
         mapping = {} 
         
         for _, row in df.iterrows():
-            pasillo = str(row[pasillo_col]).strip()
-            if pd.isna(row[pasillo_col]) or pasillo.lower() == 'nan' or pasillo == "":
+            # Usamos iloc[0] para la primera columna (Pasillo)
+            pasillo = str(row.iloc[0]).strip()
+            if pd.isna(row.iloc[0]) or pasillo.lower() == 'nan' or pasillo == "":
                 continue
-                
-            for col in model_cols:
-                modelo = str(row[col]).strip()
-                if pd.notna(row[col]) and modelo != "" and modelo.lower() != 'nan':
+            
+            # Usamos el resto de las columnas para los modelos
+            modelos_en_fila = row.iloc[1:]
+            for val in modelos_en_fila:
+                modelo = str(val).strip()
+                if pd.notna(val) and modelo != "" and modelo.lower() != 'nan':
                     if modelo not in mapping:
                         mapping[modelo] = []
                     if pasillo not in mapping[modelo]:
@@ -42,28 +40,24 @@ def load_data():
         
         return sorted(lista_modelos), mapping
     except Exception as e:
-        st.error(f"Error al leer el archivo: {e}")
+        st.error(f"Error al procesar el archivo: {e}")
         return None, None
 
 try:
     modelos, ubicaciones = load_data()
 
     if modelos is None:
-        st.error("⚠️ Error crítico al cargar los datos.")
+        st.error("⚠️ No se pudo cargar el archivo 'estanterias_shop.csv'.")
     else:
         seleccion = st.selectbox(
-            "Seleccioná o escribí el nombre del modelo:",
+            "Seleccioná o escribí el modelo:",
             options=[""] + modelos,
-            format_func=lambda x: "🔎 Empezá a escribir..." if x == "" else x
+            format_func=lambda x: "🔎 Buscar modelo..." if x == "" else x
         )
 
         if seleccion:
             pasillos = ubicaciones[seleccion]
-            st.subheader(f"📍 Ubicación para: {seleccion}")
-            
-            if len(pasillos) > 1:
-                st.warning(f"Este modelo está en {len(pasillos)} pasillos.")
-            
+            st.subheader(f"📍 Ubicación: {seleccion}")
             for p in pasillos:
                 st.success(f"✅ **{p}**")
                 
